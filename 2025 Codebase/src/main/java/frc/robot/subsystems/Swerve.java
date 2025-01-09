@@ -1,6 +1,7 @@
 package frc.robot.subsystems;
 
 import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.commands.PathfindingCommand;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
@@ -123,11 +124,11 @@ public class Swerve extends SubsystemBase {
                     },
                     this
             );
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } catch (ParseException e) {
-            throw new RuntimeException(e);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+
+        PathfindingCommand.warmupCommand().schedule();
     }
 
     private Pose2d getPose(){

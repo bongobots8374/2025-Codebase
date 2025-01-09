@@ -5,16 +5,17 @@ import com.pathplanner.lib.commands.PathfindingCommand;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
+import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.SwerveConstants;
-import org.json.simple.parser.ParseException;
+import frc.robot.LimelightHelpers;
 import swervelib.SwerveDrive;
 import swervelib.math.SwerveMath;
 import swervelib.parser.SwerveParser;
@@ -28,7 +29,7 @@ public class Swerve extends SubsystemBase {
     public boolean useVision = false;
 
     public Swerve(boolean useVision) throws IOException {
-        double maximumSpeed = Units.feetToMeters(SwerveConstants.MaxSpeed);
+        double maximumSpeed = edu.wpi.first.math.util.Units.feetToMeters(SwerveConstants.MaxSpeed);
         File swerveJsonDirectory = new File(Filesystem.getDeployDirectory(),"swerve");
         swerveDrive = new SwerveParser(swerveJsonDirectory).createSwerveDrive(maximumSpeed);
 
@@ -141,5 +142,20 @@ public class Swerve extends SubsystemBase {
 
     private ChassisSpeeds getRobotVelocity(){
         return swerveDrive.getRobotVelocity();
+    }
+
+    private void visionUpdate(){
+        boolean doRejectUpdate = false;
+        LimelightHelpers.SetRobotOrientation("limelight", getPose().getRotation().getDegrees(), 0, 0, 0, 0, 0);
+        LimelightHelpers.PoseEstimate mt2 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2("limelight");
+        if (swerveDrive.getGyro().getYawAngularVelocity().abs(Units.DegreesPerSecond) > 720){
+            doRejectUpdate = true;
+        }
+        if (mt2.tagCount == 0){
+            doRejectUpdate = true;
+        }
+        if(!doRejectUpdate){
+            swerveDrive.addVisionMeasurement(mt2.pose, mt2.timestampSeconds, VecBuilder.fill(.7,.7,9999999));
+        }
     }
 }

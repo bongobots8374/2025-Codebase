@@ -29,7 +29,7 @@ public class RobotContainer {
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
     try {
-      swerve = new Swerve();
+      swerve = new Swerve(false);
     } catch (IOException e){
       System.exit(39909);
     }

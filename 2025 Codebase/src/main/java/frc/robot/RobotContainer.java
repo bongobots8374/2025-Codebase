@@ -4,6 +4,8 @@
 
 package frc.robot;
 
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.commands.PathPlannerAuto;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -23,16 +25,19 @@ import java.io.IOException;
 public class RobotContainer {
   // The robot's subsystems and commands are defined here...
   Swerve swerve;
+  AutoBuilder autoBuilder;
 
   GenericHID driveControl = new GenericHID(OperatorConstants.DriverControllerPort);
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
     try {
-      swerve = new Swerve(false);
+      swerve = new Swerve(true);
     } catch (IOException e){
       System.exit(39909);
     }
+
+
 
     // Configure the trigger bindings
     configureBindings();
@@ -50,13 +55,13 @@ public class RobotContainer {
   private void configureBindings() {
     Command controllerDrive = swerve.driveCommand(
             () -> {
-                return MathUtil.applyDeadband(driveControl.getRawAxis(OperatorConstants.LeftXAxis), OperatorConstants.LeftXDeadband);
+                return MathUtil.applyDeadband(-driveControl.getRawAxis(OperatorConstants.LeftYAxis), OperatorConstants.LeftYDeadband);
             },
             () -> {
-                return MathUtil.applyDeadband(driveControl.getRawAxis(OperatorConstants.LeftYAxis), OperatorConstants.LeftYDeadband);
+                return MathUtil.applyDeadband(-driveControl.getRawAxis(OperatorConstants.LeftXAxis), OperatorConstants.LeftXDeadband);
             },
             () -> {
-                return MathUtil.applyDeadband(driveControl.getRawAxis(OperatorConstants.RightXAxis), OperatorConstants.RightXDeadband);
+                return MathUtil.applyDeadband(-driveControl.getRawAxis(OperatorConstants.RightXAxis), OperatorConstants.RightXDeadband);
             }
     );
 
@@ -69,6 +74,6 @@ public class RobotContainer {
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
-    return null;
+    return new PathPlannerAuto("Test Auto");
   }
 }

@@ -9,9 +9,14 @@ import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.units.Units;
+import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.SwerveConstants;
@@ -26,7 +31,8 @@ import java.util.function.DoubleSupplier;
 
 public class Swerve extends SubsystemBase {
     private final SwerveDrive swerveDrive;
-    public boolean useVision = false;
+    private StructPublisher<Pose2d> publisher;
+    public boolean useVision = true;
 
     public Swerve(boolean useVision) throws IOException {
         double maximumSpeed = edu.wpi.first.math.util.Units.feetToMeters(SwerveConstants.MaxSpeed);
@@ -34,6 +40,11 @@ public class Swerve extends SubsystemBase {
         swerveDrive = new SwerveParser(swerveJsonDirectory).createSwerveDrive(maximumSpeed);
 
         this.useVision = useVision;
+
+        publisher = NetworkTableInstance.getDefault()
+                .getStructTopic("Pose", Pose2d.struct).publish();
+
+        setupPathPlanner();
     }
 
     /**
@@ -74,19 +85,30 @@ public class Swerve extends SubsystemBase {
     {
         return run(() -> {
             // Make the robot move
-            swerveDrive.drive(new Translation2d(translationX.getAsDouble() * swerveDrive.getMaximumChassisVelocity(),
-                            translationY.getAsDouble() * swerveDrive.getMaximumChassisVelocity()),
-                    angularRotationX.getAsDouble() * swerveDrive.getMaximumChassisAngularVelocity(),
+            swerveDrive.drive(new Translation2d(Math.pow(translationX.getAsDouble(), 3) * swerveDrive.getMaximumChassisVelocity(),
+                            Math.pow(translationY.getAsDouble(), 3) * swerveDrive.getMaximumChassisVelocity()),
+                    Math.pow(angularRotationX.getAsDouble(), 3) * swerveDrive.getMaximumChassisAngularVelocity(),
                     true,
-                    false);
+                    true);
         });
     }
 
     @Override
     public void periodic() {
         if (useVision){
+            SmartDashboard.putNumber("Seen Targets Count", LimelightHelpers.getTargetCount("limelight"));
+            if (LimelightHelpers.getTargetCount("limelight") > 0){
+                visionUpdate();
+            }
             swerveDrive.updateOdometry();
         }
+
+        SmartDashboard.putNumber("FL Wheel", swerveDrive.getModules()[0].getAngleMotor().getPosition());
+        SmartDashboard.putNumber("FR Wheel", swerveDrive.getModules()[1].getAngleMotor().getPosition());
+        SmartDashboard.putNumber("BL Wheel", swerveDrive.getModules()[2].getAngleMotor().getPosition());
+        SmartDashboard.putNumber("BR Wheel", swerveDrive.getModules()[3].getAngleMotor().getPosition());
+
+        publisher.set(swerveDrive.getPose());
     }
 
     private void setupPathPlanner(){

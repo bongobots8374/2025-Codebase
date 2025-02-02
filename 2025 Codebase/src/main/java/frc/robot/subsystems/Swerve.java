@@ -19,7 +19,9 @@ import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants;
 import frc.robot.Constants.SwerveConstants;
+import frc.robot.Constants.LimeLights;
 import frc.robot.LimelightHelpers;
 import swervelib.SwerveDrive;
 import swervelib.math.SwerveMath;
@@ -96,8 +98,9 @@ public class Swerve extends SubsystemBase {
     @Override
     public void periodic() {
         if (useVision){
-            SmartDashboard.putNumber("Seen Targets Count", LimelightHelpers.getTargetCount("limelight"));
-            if (LimelightHelpers.getTargetCount("limelight") > 0){
+            SmartDashboard.putNumber("Seen Targets Count: LL3", LimelightHelpers.getTargetCount(LimeLights.three));
+            SmartDashboard.putNumber("Seen Targets Count: LL$", LimelightHelpers.getTargetCount(LimeLights.four));
+            if (LimelightHelpers.getTargetCount(LimeLights.three) > 0 || LimelightHelpers.getTargetCount(LimeLights.four) > 0){
                 visionUpdate();
             }
             swerveDrive.updateOdometry();
@@ -167,17 +170,18 @@ public class Swerve extends SubsystemBase {
     }
 
     private void visionUpdate(){
-        boolean doRejectUpdate = false;
-        LimelightHelpers.SetRobotOrientation("limelight", getPose().getRotation().getDegrees(), 0, 0, 0, 0, 0);
-        LimelightHelpers.PoseEstimate mt2 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2("limelight");
+        LimelightHelpers.SetRobotOrientation(LimeLights.three, getPose().getRotation().getDegrees(), 0, 0, 0, 0, 0);
+        LimelightHelpers.PoseEstimate mt23 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(LimeLights.three);
+        LimelightHelpers.SetRobotOrientation(LimeLights.four, getPose().getRotation().getDegrees(), 0, 0, 0, 0, 0);
+        LimelightHelpers.PoseEstimate mt24 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(LimeLights.four);
         if (swerveDrive.getGyro().getYawAngularVelocity().abs(Units.DegreesPerSecond) > 720){
-            doRejectUpdate = true;
+            return;
         }
-        if (mt2.tagCount == 0){
-            doRejectUpdate = true;
+        if(mt23.tagCount > 0){
+            swerveDrive.addVisionMeasurement(mt23.pose, mt23.timestampSeconds, VecBuilder.fill(.7,.7,9999999));
         }
-        if(!doRejectUpdate){
-            swerveDrive.addVisionMeasurement(mt2.pose, mt2.timestampSeconds, VecBuilder.fill(.7,.7,9999999));
+        if(mt24.tagCount > 0){
+            swerveDrive.addVisionMeasurement(mt24.pose, mt24.timestampSeconds, VecBuilder.fill(.7,.7,9999999));
         }
     }
 }

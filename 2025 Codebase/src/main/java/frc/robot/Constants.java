@@ -27,4 +27,9 @@ public final class Constants {
   public static class SwerveConstants {
     public static final double MaxSpeed = 50;
   }
+
+  public static class LimeLights {
+    public static final String three = "limelight-three";
+    public static final String four = "limelight-four";
+  }
 }

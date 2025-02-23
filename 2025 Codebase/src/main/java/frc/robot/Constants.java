@@ -4,6 +4,11 @@
 
 package frc.robot;
 
+import com.revrobotics.spark.SparkBase.PersistMode;
+import com.revrobotics.spark.SparkBase.ResetMode;
+import com.revrobotics.spark.config.ClosedLoopConfig.FeedbackSensor;
+import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
+
 /**
  * The Constants class provides a convenient place for teams to hold robot-wide numerical or boolean
  * constants. This class should not be used for any other purpose. All constants should be declared
@@ -31,5 +36,24 @@ public final class Constants {
   public static class LimeLights {
     public static final String three = "limelight-three";
     public static final String four = "limelight-four";
+  }
+
+  public static class CanIDs {
+    public static final int stageOneMotor = 14;
+    public static final int stageTwoMotor = 15;
+  }
+
+  public static class ElevatorMotorConfig {
+    public static final boolean oneInverted = false;
+    public static final boolean twoInverted = false;
+    public static final IdleMode idleMode = IdleMode.kBrake;
+    public static final int positionConversionFactor = 1000;
+    public static final int velocityConversionFactor = 1000;
+    public static final FeedbackSensor feedbackSensor = FeedbackSensor.kPrimaryEncoder;
+    public static final double p = 1.0;
+    public static final double i = 0.0;
+    public static final double d = 0.0;
+    public static final ResetMode resetMode = ResetMode.kResetSafeParameters;
+    public static final PersistMode persistMode = PersistMode.kPersistParameters;
   }
 }

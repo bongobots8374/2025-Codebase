@@ -42,8 +42,11 @@ public final class Constants {
     public static final int stageOneMotor = 14;
     public static final int stageTwoMotor = 15;
     public static final int algaeArmMotor = 17;
+    public static final int coralAngleMotor = 19;
     public static final int rightAlgaeIntakeMotor = 21;
     public static final int leftAlgaeIntakeMotor = 22;
+    public static final int rightCoralIntakeMotor = 24;
+    public static final int leftCoralIntakeMotor = 25;
   }
 
   public static class ElevatorMotorConfig {
@@ -65,6 +68,22 @@ public final class Constants {
     public static final boolean rightInverted = true;
     public static final boolean leftInverted = false;
     public static final IdleMode armsIdleMode = IdleMode.kBrake;
+    public static final IdleMode intakeMode = IdleMode.kCoast;
+    public static final int positionConversionFactor = 1000;
+    public static final int velocityConversionFactor = 1000;
+    public static final FeedbackSensor feedbackSensor = FeedbackSensor.kPrimaryEncoder;
+    public static final double p = 1.0;
+    public static final double i = 0.0;
+    public static final double d = 0.0;
+    public static final ResetMode resetMode = ResetMode.kResetSafeParameters;
+    public static final PersistMode persistMode = PersistMode.kPersistParameters;
+  }
+
+  public static class CoralMotorConfig {
+    public static final boolean angleInverted = false;
+    public static final boolean rightInverted = true;
+    public static final boolean leftInverted = false;
+    public static final IdleMode angleIdleMode = IdleMode.kBrake;
     public static final IdleMode intakeMode = IdleMode.kCoast;
     public static final int positionConversionFactor = 1000;
     public static final int velocityConversionFactor = 1000;

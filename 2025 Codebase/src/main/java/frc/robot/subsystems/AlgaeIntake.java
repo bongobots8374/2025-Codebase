@@ -62,6 +62,13 @@ public class AlgaeIntake extends SubsystemBase {
         intakeRight.configure(intakeRightConfig, AlgaeMotorConfig.resetMode, AlgaeMotorConfig.persistMode);
     }
 
+    public Command move(DoubleSupplier angle, DoubleSupplier intake){
+        return run(() -> {
+            arms.set(angle.getAsDouble());
+            intakeLeft.set(intake.getAsDouble());
+        });
+    }
+    /*
     public Command angleMove(DoubleSupplier input) {
         return run(() -> {
             arms.set(input.getAsDouble());
@@ -73,4 +80,5 @@ public class AlgaeIntake extends SubsystemBase {
             intakeLeft.set(input.getAsDouble());
         });
     }
+    */
 }

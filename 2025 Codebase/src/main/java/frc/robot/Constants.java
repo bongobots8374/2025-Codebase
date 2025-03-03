@@ -41,12 +41,26 @@ public final class Constants {
   public static class CanIDs {
     public static final int stageOneMotor = 14;
     public static final int stageTwoMotor = 15;
+    public static final int algaeArmMotor = 17;
   }
 
   public static class ElevatorMotorConfig {
     public static final boolean oneInverted = false;
     public static final boolean twoInverted = false;
     public static final IdleMode idleMode = IdleMode.kBrake;
+    public static final int positionConversionFactor = 1000;
+    public static final int velocityConversionFactor = 1000;
+    public static final FeedbackSensor feedbackSensor = FeedbackSensor.kPrimaryEncoder;
+    public static final double p = 1.0;
+    public static final double i = 0.0;
+    public static final double d = 0.0;
+    public static final ResetMode resetMode = ResetMode.kResetSafeParameters;
+    public static final PersistMode persistMode = PersistMode.kPersistParameters;
+  }
+
+  public static class AlgaeMotorConfig {
+    public static final boolean armsInverted = false;
+    public static final IdleMode armsIdleMode = IdleMode.kBrake;
     public static final int positionConversionFactor = 1000;
     public static final int velocityConversionFactor = 1000;
     public static final FeedbackSensor feedbackSensor = FeedbackSensor.kPrimaryEncoder;

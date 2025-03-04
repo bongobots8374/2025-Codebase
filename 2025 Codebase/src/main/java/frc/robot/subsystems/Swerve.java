@@ -31,20 +31,20 @@ import java.io.File;
 import java.io.IOException;
 import java.util.function.DoubleSupplier;
 
+import org.littletonrobotics.junction.Logger;
+
 public class Swerve extends SubsystemBase {
     private final SwerveDrive swerveDrive;
     private StructPublisher<Pose2d> publisher;
     public boolean useVision = true;
 
     public Swerve(boolean useVision) throws IOException {
+        LimelightHelpers.SetIMUMode(LimeLights.four, 0);
         double maximumSpeed = edu.wpi.first.math.util.Units.feetToMeters(SwerveConstants.MaxSpeed);
         File swerveJsonDirectory = new File(Filesystem.getDeployDirectory(),"swerve");
         swerveDrive = new SwerveParser(swerveJsonDirectory).createSwerveDrive(maximumSpeed);
 
         this.useVision = useVision;
-
-        publisher = NetworkTableInstance.getDefault()
-                .getStructTopic("Pose", Pose2d.struct).publish();
 
         setupPathPlanner();
     }
@@ -111,7 +111,12 @@ public class Swerve extends SubsystemBase {
         SmartDashboard.putNumber("BL Wheel", swerveDrive.getModules()[2].getAngleMotor().getPosition());
         SmartDashboard.putNumber("BR Wheel", swerveDrive.getModules()[3].getAngleMotor().getPosition());
 
-        publisher.set(swerveDrive.getPose());
+        Logger.recordOutput("Pose", swerveDrive.getPose());
+    }
+
+    @Override
+    public void simulationPeriodic() {
+        Logger.recordOutput("RobotPose", swerveDrive.field.getRobotPose());
     }
 
     private void setupPathPlanner(){

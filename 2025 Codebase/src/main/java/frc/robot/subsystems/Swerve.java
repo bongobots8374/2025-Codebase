@@ -7,6 +7,8 @@ import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -15,12 +17,14 @@ import edu.wpi.first.units.Units;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.Constants.SwerveConstants;
+import frc.robot.subsystems.vision.SimCamera;
 import frc.robot.Constants.LimeLights;
 import frc.robot.LimelightHelpers;
 import swervelib.SwerveDrive;
@@ -31,15 +35,23 @@ import java.io.File;
 import java.io.IOException;
 import java.util.function.DoubleSupplier;
 
+import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
+import org.photonvision.simulation.VisionSystemSim;
 
 public class Swerve extends SubsystemBase {
     private final SwerveDrive swerveDrive;
-    private StructPublisher<Pose2d> publisher;
     public boolean useVision = true;
+    private SimCamera three;
+    private SimCamera four;
 
     public Swerve(boolean useVision) throws IOException {
-        LimelightHelpers.SetIMUMode(LimeLights.four, 0);
+        if (RobotBase.isReal()){
+            LimelightHelpers.SetIMUMode(LimeLights.four, 0);
+        } else {
+            three = new SimCamera("Three", new Transform3d(0.0, 0.0, 1.0, new Rotation3d(0, 0,Math.PI)));
+            four = new SimCamera("Four", new Transform3d(0.0, 0.0, 0.0, new Rotation3d(0, 0, 0)));
+        }
         double maximumSpeed = edu.wpi.first.math.util.Units.feetToMeters(SwerveConstants.MaxSpeed);
         File swerveJsonDirectory = new File(Filesystem.getDeployDirectory(),"swerve");
         swerveDrive = new SwerveParser(swerveJsonDirectory).createSwerveDrive(maximumSpeed);
@@ -98,10 +110,51 @@ public class Swerve extends SubsystemBase {
     @Override
     public void periodic() {
         if (useVision){
-            SmartDashboard.putNumber("Seen Targets Count: LL3", LimelightHelpers.getTargetCount(LimeLights.three));
-            SmartDashboard.putNumber("Seen Targets Count: LL$", LimelightHelpers.getTargetCount(LimeLights.four));
-            if (LimelightHelpers.getTargetCount(LimeLights.three) > 0 || LimelightHelpers.getTargetCount(LimeLights.four) > 0){
-                visionUpdate();
+            if (RobotBase.isReal()){
+                SmartDashboard.putNumber("Seen Targets Count: LL3", LimelightHelpers.getTargetCount(LimeLights.three));
+                SmartDashboard.putNumber("Seen Targets Count: LL4", LimelightHelpers.getTargetCount(LimeLights.four));
+                if (LimelightHelpers.getTargetCount(LimeLights.three) > 0 || LimelightHelpers.getTargetCount(LimeLights.four) > 0){
+                    visionUpdate();
+                }
+            } else {
+                three.system.update(getPose());
+                four.system.update(getPose());
+
+                for (var result : three.camera.getAllUnreadResults()){
+                    if (result.hasTargets()){
+                        Logger.recordOutput("Seen Targets Counts: LL3", result.targets.size());
+                    } else {
+                        continue;
+                    }
+
+                    if (result.multitagResult.isPresent()){
+                        var multitagResult = result.multitagResult.get();
+
+                        var estimation = three.getEstimatedRobotPose(getPose(), result);
+
+                        if (estimation.isPresent()){
+                            swerveDrive.addVisionMeasurement(estimation.get().estimatedPose.toPose2d(), estimation.get().timestampSeconds);
+                        }
+                    }
+                }
+
+                for (var result : four.camera.getAllUnreadResults()){
+                    if (result.hasTargets()){
+                        Logger.recordOutput("Seen Targets Counts: LL4", result.targets.size());
+                    } else {
+                        continue;
+                    }
+
+                    if (result.multitagResult.isPresent()){
+                        var multitagResult = result.multitagResult.get();
+
+                        var estimation = four.getEstimatedRobotPose(getPose(), result);
+
+                        if (estimation.isPresent()){
+                            swerveDrive.addVisionMeasurement(estimation.get().estimatedPose.toPose2d(), estimation.get().timestampSeconds);
+                        }
+                    }
+                }
             }
             swerveDrive.updateOdometry();
         }
@@ -162,6 +215,7 @@ public class Swerve extends SubsystemBase {
         PathfindingCommand.warmupCommand().schedule();
     }
 
+    @AutoLogOutput
     private Pose2d getPose(){
         return swerveDrive.getPose();
     }
